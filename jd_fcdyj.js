@@ -24,7 +24,7 @@ cron "0 0 * * *" script-path=https://raw.githubusercontent.com/Wenmoux/scripts/m
 ============小火箭=========
 发财大赢家 = type=cron,script-path=https://raw.githubusercontent.com/Wenmoux/scripts/master/jd/jd_fcdyj.js, cronexpr="1 6-22/3 * * *", timeout=3600, enable=true
  */
-const $ = new Env('发财大赢家助力');
+const $ = new Env('xpq发财大赢家助力');
 //Node.js用户请在jdCookie.js处填写京东ck;
 const jdCookieNode = $.isNode() ? require('./jdCookie.js') : '';
 const dyjCode = $.isNode() ? (process.env.dyjCode ? process.env.dyjCode : null) : null //邀请码变量，不支持多账号，格式：redEnvelopeId@markedPin
