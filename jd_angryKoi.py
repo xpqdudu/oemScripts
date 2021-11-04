@@ -108,6 +108,47 @@ class Judge_env(object):
 cookie_list=Judge_env().main_run()
 
 
+## 获取通知服务
+class Msg(object):
+    def getsendNotify(self, a=1):
+        try:
+            url = ''
+            response = requests.get(url,timeout=3)
+            with open('sendNotify.py', "w+", encoding="utf-8") as f:
+                f.write(response.text)
+            return
+        except:
+            pass
+        if a < 5:
+            a += 1
+            return self.getsendNotify(a)
+
+    def main(self,n=1):
+        global send,msg,initialize
+        sys.path.append(os.path.abspath('.'))
+        for n in range(3):
+            try:
+                from sendNotify import send,msg,initialize
+                break
+            except:
+                self.getsendNotify()
+        l=['BARK','SCKEY','TG_BOT_TOKEN','TG_USER_ID','TG_API_HOST','TG_PROXY_HOST','TG_PROXY_PORT','DD_BOT_TOKEN','DD_BOT_SECRET','Q_SKEY','QQ_MODE','QYWX_AM','PUSH_PLUS_TOKEN','PUSH_PLUS_USER']
+        d={}
+        for a in l:
+            try:
+              d[a]=eval(a)
+            except:
+                d[a]=''
+        try:
+            initialize(d)
+        except:
+            self.getsendNotify()
+            if n < 5:
+                n += 1
+                return self.main(n)
+            else:
+                print('获取通知服务失败，请检查网络连接...')
+Msg().main()   # 初始化通知服务   
 
 # 异步检查账号有效性
 nickname_findall=re.compile(r'"nickname":"(.+?)"')
