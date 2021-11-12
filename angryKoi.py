@@ -124,7 +124,7 @@ cookie_list=Judge_env().main_run()
 class Msg(object):
     def getsendNotify(self, a=1):
         try:
-            url = 'https://mirror.ghproxy.com/https://raw.githubusercontent.com/wuye999/myScripts/main/sendNotify.py'
+            url = ''
             response = requests.get(url,timeout=3)
             with open('sendNotify.py', "w+", encoding="utf-8") as f:
                 f.write(response.text)
@@ -154,12 +154,7 @@ class Msg(object):
         try:
             initialize(d)
         except:
-            self.getsendNotify()
-            if f < 5:
-                f += 1
-                return self.main(f)
-            else:
-                print('获取通知服务失败，请检查网络连接...')
+            pass
 Msg().main()   # 初始化通知服务   
 
 # 异步检查账号有效性
@@ -344,10 +339,12 @@ def main():
     
     msg('作者：wuye9999\n')
     msg('地址:https://github.com/wuye999/myScripts')
-    run_send == 'no';
     if run_send=='yes':
         send('愤怒的锦鲤')   # 通知服务
 
 
 if __name__ == '__main__':
     main()
+
+
+
