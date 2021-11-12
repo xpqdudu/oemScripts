@@ -2,10 +2,12 @@
 # 入口>京东首页>领券>锦鲤红包
 # 环境变量JD_COOKIE，多账号用&分割
 # 环境变量kois中填入需要助力的pt_pin，有多个请用 '@'或'&'或空格 符号连接,不填默认全部账号内部随机助力
+# 环境变量wy_AsyncConcurrent规定是否启用高并发，yes或no,不填默认no不启用高并发
 # 脚本内或环境变量填写，优先环境变量
 # export JD_COOKIE="第1个cookie&第2个cookie"
 # export kois=" 第1个cookie的pin & 第2个cookie的pin "
-# 11/4 11:23 增加自动开红包
+# export wy_AsyncConcurrent="yes"      
+# 11 10 22:00 应要求更改cdn
 
 
 import os,json,random,time,re,string,functools,asyncio
@@ -15,7 +17,7 @@ sys.path.append(os.path.abspath('.'))
 try:
     import aiohttp
 except Exception as e:
-    print(e, "\n缺少aiohttp 模块，请执行命令 pip3 install --upgrade pip\n缺少aiohttp 模块，请执行命令安装: pip3 install aiohttp\n")
+    print(e, "\n请更新pip版本：pip3 install --upgrade pip \n缺少aiohttp 模块，请执行命令安装: pip3 install aiohttp\n")
     exit(3) 
 try:
     import requests
@@ -23,7 +25,18 @@ except Exception as e:
     print(str(e) + "\n缺少requests模块, 请执行命令：pip3 install requests\n")
 requests.packages.urllib3.disable_warnings()
 
-run_send='no'     # yes或no, yes则启用通知推送服务
+
+run_send='yes'              # yes或no, yes则启用通知推送服务
+run_getUserInfo='no'        # yes或no, yes则启用检查账号有效性
+wy_AsyncConcurrent='no'    # 是否启用高并发，环境变量优先
+
+
+# 检查python版本
+def python_version():
+    if sys.version_info < (3, 8):
+        print('你的python版本小于3.8')
+        exit()
+python_version()
 
 
 # 获取pin
@@ -63,7 +76,6 @@ def v4_env(env,paths):
         for line in f.readlines():
             try:
                 c=b.match(line).group(1)
-                print(line)
                 break
             except:
                 pass
@@ -112,7 +124,7 @@ cookie_list=Judge_env().main_run()
 class Msg(object):
     def getsendNotify(self, a=1):
         try:
-            url = 'https://ghproxy.com/https://raw.githubusercontent.com/wuye999/myScripts/main/sendNotify.py'
+            url = 'https://mirror.ghproxy.com'
             response = requests.get(url,timeout=3)
             with open('sendNotify.py', "w+", encoding="utf-8") as f:
                 f.write(response.text)
@@ -123,7 +135,7 @@ class Msg(object):
             a += 1
             return self.getsendNotify(a)
 
-    def main(self,n=1):
+    def main(self,f=1):
         global send,msg,initialize
         sys.path.append(os.path.abspath('.'))
         for n in range(3):
@@ -136,16 +148,16 @@ class Msg(object):
         d={}
         for a in l:
             try:
-              d[a]=eval(a)
+                d[a]=eval(a)
             except:
                 d[a]=''
         try:
             initialize(d)
         except:
             self.getsendNotify()
-            if n < 5:
-                n += 1
-                return self.main(n)
+            if f < 5:
+                f += 1
+                return self.main(f)
             else:
                 print('获取通知服务失败，请检查网络连接...')
 Msg().main()   # 初始化通知服务   
@@ -184,7 +196,8 @@ async def getUserInfo_list(cookie_list):
         tasks=[getUserInfo(cookie) for cookie in cookie_list]
         await asyncio.wait(tasks)
     return [cookie for cookie in cookie_ok_list if cookie]
-cookie_list=asyncio.run(getUserInfo_list(cookie_list))      # 初始化cookie
+if run_getUserInfo=='yes':
+    cookie_list=asyncio.run(getUserInfo_list(cookie_list))      # 初始化cookie
 
 
 async def taskPostUrl(functionId, body, cookie):
@@ -208,12 +221,12 @@ async def taskPostUrl(functionId, body, cookie):
                 return res
         except:
             if n==2:
-                msg('API请求失败，请检查网路重试??\n')  
+                msg('API请求失败，请检查网路重试❗\n')  
 
 # 开启助力
 code_findall=re.compile(r'"code":(.*?),')
 async def h5launch(cookie):
-    body=body={"followShop":1,"random":''.join(random.sample(string.digits, 6)),"log":"4817e3a2~8,~1wsv3ig","sceneid":"JLHBhPageh5"}
+    body={"followShop":1,"random":''.join(random.sample(string.digits, 6)),"log":"4817e3a2~8,~1wsv3ig","sceneid":"JLHBhPageh5"}
     res=await taskPostUrl("h5launch", body, cookie)
     if not res:
         return
@@ -262,14 +275,17 @@ async def h5receiveRedpacketAll(cookie):
     msg(f'账号 {get_pin(cookie)} 开红包')
     if not res:
         return
-    biz_msg=biz_msg_findall.findall(res)[0]
+    try:
+        biz_msg=biz_msg_findall.findall(res)[0]
+    except:
+        print(res)
+        return
     if discount:=discount_findall.findall(res):
         discount=discount[0]
         msg(f"恭喜您，获得红包 {discount}\n")
+        return await h5receiveRedpacketAll(cookie)
     else:
         msg(f"{biz_msg}\n")
-
-
 
 
 async def asyncmain():
@@ -287,37 +303,52 @@ async def asyncmain():
     async with aiohttp.ClientSession() as session:
 
         msg('***************************开启助力码***************\n')
-        tasks=[h5launch(cookie) for cookie in cookie_list]
-        await asyncio.wait(tasks)
+        if (wy_AsyncConcurrent:=get_env('wy_AsyncConcurrent'))=='no':
+            [await h5launch(cookie) for cookie in cookie_list]
+        else:
+            tasks=[h5launch(cookie) for cookie in cookie_list]
+            await asyncio.wait(tasks)
 
         msg('***************************获取助力码***************\n')
-        tasks=[h5activityIndex(cookie) for cookie in cookie_list_pin]
-        await asyncio.wait(tasks)
+        if wy_AsyncConcurrent=='no':
+            [await h5activityIndex(cookie) for cookie in cookie_list_pin]
+        else:
+            tasks=[h5activityIndex(cookie) for cookie in cookie_list_pin]
+            await asyncio.wait(tasks)
+
+
 
         msg('*******************助力**************************\n')
-        tasks=list()
         if inviteCode_list:
-            for inviteCode in inviteCode_list:
-                for cookie in cookie_list:
-                    tasks.append(jinli_h5assist(cookie,inviteCode))
-            await asyncio.wait(tasks)
+            if wy_AsyncConcurrent=='no':
+                [await jinli_h5assist(cookie,inviteCode) for inviteCode in inviteCode_list for cookie in cookie_list]
+            else:
+                tasks=[jinli_h5assist(cookie,inviteCode) for inviteCode in inviteCode_list for cookie in cookie_list]
+                await asyncio.wait(tasks)
         else:
             msg('没有需要助力的锦鲤红包助力码\n')
 
         msg('*******************开红包**************************\n')
-        tasks=[h5receiveRedpacketAll(cookie) for cookie in cookie_list]
-        await asyncio.wait(tasks)
+        if wy_AsyncConcurrent=='no':
+            [await h5receiveRedpacketAll(cookie) for cookie in cookie_list]
+        else:
+            tasks=[h5receiveRedpacketAll(cookie) for cookie in cookie_list]
+            await asyncio.wait(tasks)
 
 
 def main():
-    msg('??愤怒的锦鲤，开始！\n')
+    msg('🔔愤怒的锦鲤，开始！\n')
     msg(f'====================共{len(cookie_list)}京东个账号Cookie=========\n')
 
     asyncio.run(asyncmain())
     
+    msg('作者：wuye9999\n')
+    msg('地址:https://github.com/wuye999/myScripts')
     if run_send=='yes':
         send('愤怒的锦鲤')   # 通知服务
 
 
 if __name__ == '__main__':
     main()
+
+
