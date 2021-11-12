@@ -124,7 +124,7 @@ cookie_list=Judge_env().main_run()
 class Msg(object):
     def getsendNotify(self, a=1):
         try:
-            url = 'https://mirror.ghproxy.com/https://raw.githubusercontent.com/xpqdudu/oemScripts/main/sendNotify.py'
+            url = 'https://mirror.ghproxy.com/https://raw.githubusercontent.com/wuye999/myScripts/main/sendNotify.py'
             response = requests.get(url,timeout=3)
             with open('sendNotify.py', "w+", encoding="utf-8") as f:
                 f.write(response.text)
@@ -344,11 +344,10 @@ def main():
     
     msg('作者：wuye9999\n')
     msg('地址:https://github.com/wuye999/myScripts')
+    run_send == 'no';
     if run_send=='yes':
-        #send('愤怒的锦鲤')   # 通知服务
+        send('愤怒的锦鲤')   # 通知服务
 
 
-
-
-
-
+if __name__ == '__main__':
+    main()
