@@ -131,9 +131,7 @@ class Msg(object):
             return
         except:
             pass
-        if a < 5:
-            a += 1
-            return self.getsendNotify(a)
+        
 
     def main(self,f=1):
         global send,msg,initialize
@@ -143,14 +141,14 @@ class Msg(object):
                 from sendNotify import send,msg,initialize
                 break
             except:
-                self.getsendNotify()
+                pass
         l=['BARK','SCKEY','TG_BOT_TOKEN','TG_USER_ID','TG_API_HOST','TG_PROXY_HOST','TG_PROXY_PORT','DD_BOT_TOKEN','DD_BOT_SECRET','Q_SKEY','QQ_MODE','QYWX_AM','PUSH_PLUS_TOKEN','PUSH_PLUS_USER']
         d={}
         for a in l:
             try:
                 d[a]=eval(a)
             except:
-                d[a]=''
+                pass
         try:
             initialize(d)
         except:
@@ -159,8 +157,8 @@ class Msg(object):
                 f += 1
                 return self.main(f)
             else:
-                print('获取通知服务失败，请检查网络连接...')
-Msg().main()   # 初始化通知服务   
+               pass
+#Msg().main()   # 初始化通知服务   
 
 # 异步检查账号有效性
 nickname_findall=re.compile(r'"nickname":"(.+?)"')
