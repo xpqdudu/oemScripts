@@ -348,8 +348,7 @@ def main():
         #send('愤怒的锦鲤')   # 通知服务
 
 
-if __name__ == '__main__':
-    main()
+
 
 
 
