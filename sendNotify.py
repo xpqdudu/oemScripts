@@ -181,7 +181,10 @@ def initialize(d):
             # print("已获取并使用Env环境 PUSH_PLUS_USER")
 
     # 获取企业微信应用推送 QYWX_AM
-
+    if "QYWX_AM" in os.environ:
+        if len(os.environ["QYWX_AM"]) > 1:
+            QYWX_AM = os.environ["QYWX_AM"]
+            # print("已获取并使用Env环境 QYWX_AM")
 
     if BARK:
         notify_mode.append('bark')
@@ -207,16 +210,176 @@ def initialize(d):
         # print("企业微信机器人 推送打开")
 
 
-# tg通知
+def msg(*args):
+    global message_info
+    a=''
+    for str_msg in args:
+        a=a+' '+str(str_msg)
+    a=a[1:]
+    print(a)
+    message_info = f"{message_info}\n{a}"
+    sys.stdout.flush()
 
+def bark(title, content):
+    print("\n")
+    if not BARK:
+        print("bark服务的bark_token未设置!!\n取消推送")
+        return
+    print("bark服务启动")
+    try:
+        response = requests.get(
+            f"""https://api.day.app/{BARK}/{title}/{urllib.parse.quote_plus(content)}""").json()
+        if response['code'] == 200:
+            print('推送成功！')
+        else:
+            print('推送失败！')
+    except:
+        print('推送失败！')
+
+def serverJ(title, content):
+    print("\n")
+    if not SCKEY:
+        print("server酱服务的SCKEY未设置!!\n取消推送")
+        return
+    print("serverJ服务启动")
+    data = {
+        "text": title,
+        "desp": content.replace("\n", "\n\n")
+    }
+    response = requests.post(f"https://sc.ftqq.com/{SCKEY}.send", data=data).json()
+    if response['errno'] == 0:
+        print('推送成功！')
+    else:
+        print('推送失败！')
+
+# tg通知
+def telegram_bot(title, content):
+ 
+def dingding_bot(title, content):
+   
+
+def coolpush_bot(title, content):
+  
 
 # push+推送
-
- 
+def pushplus_bot(title, content):
+    global PUSH_PLUS_USER
+    try:
+        if not PUSH_PLUS_TOKEN:
+            print("push+ 服务的token未设置!!\n取消推送")
+            return
+        data={
+            "token": PUSH_PLUS_TOKEN,
+            "title": title,
+            "content": content,
+            "topic": PUSH_PLUS_USER,
+        }
+        print("push+ 服务启动")
+        url='https://www.pushplus.plus/send'
+        headers={
+            "Content-Type":"application/json"
+		}
+        data=json.dumps(data).encode(encoding='utf-8')
+        response = requests.post(url=url, data=data, headers=headers).json()
+        if response['code']==200:
+            print(f"push+ 推送成功！")
+        else:
+            print(f"push+ 推送失败！")
+            print(response) 
+    except Exception as e:
+        print(e)
 
 # 企业微信 APP 推送
+def wecom_app(title, content):
+    try:
+        if not QYWX_AM:
+            print("QYWX_AM 并未设置！！\n取消推送")
+            return
+        QYWX_AM_AY = re.split(',', QYWX_AM)
+        if 4 < len(QYWX_AM_AY) > 5:
+            print("QYWX_AM 设置错误！！\n取消推送")
+            return
+        print("企业微信应用服务启动")
+        corpid = QYWX_AM_AY[0]
+        corpsecret = QYWX_AM_AY[1]
+        touser = QYWX_AM_AY[2]
+        agentid = QYWX_AM_AY[3]
+        try:
+            media_id = QYWX_AM_AY[4]
+        except:
+            media_id = ''
+        wx = WeCom(corpid, corpsecret, agentid)
+        # 如果没有配置 media_id 默认就以 text 方式发送
+        if not media_id:
+            message = title + '\n\n' + content
+            response = wx.send_text(message, touser)
+        else:
+            response = wx.send_mpnews(title, content, media_id, touser)
+        if response == 'ok':
+            print('推送成功！')
+        else:
+            print('推送失败！错误信息如下：\n', response)
+    except Exception as e:
+        print(e)
 
 
+
+   
+
+def send(title,text=''):
+    """
+    使用 bark, telegram bot, dingding bot, serverJ 发送手机推送
+    :param title:
+    :param content:
+    :return:
+    """
+    content=text+'\n'+message_info
+    content += '\n\n项目地址By: https://github.com/wuye999/myScripts'
+    for i in notify_mode:
+        if i == 'bark':
+            if BARK:
+                bark(title=title, content=content)
+            else:
+                print('未启用 bark')
+            continue
+        if i == 'sc_key':
+            if SCKEY:
+                serverJ(title=title, content=content)
+            else:
+                print('未启用 Server酱')
+            continue
+        elif i == 'dingding_bot':
+            if DD_BOT_TOKEN and DD_BOT_SECRET:
+                dingding_bot(title=title, content=content)
+            else:
+                print('未启用 钉钉机器人')
+            continue
+        elif i == 'telegram_bot':
+            if TG_BOT_TOKEN and TG_USER_ID:
+                telegram_bot(title=title, content=content)
+            else:
+                print('未启用 telegram机器人')
+            continue
+        elif i == 'coolpush_bot':
+            if QQ_SKEY and QQ_MODE:
+                coolpush_bot(title=title, content=content)
+            else:
+                print('未启用 QQ机器人')
+            continue
+        elif i == 'pushplus_bot':
+            if PUSH_PLUS_TOKEN:
+                pushplus_bot(title=title, content=content)
+            else:
+                print('未启用 PUSHPLUS机器人')
+            continue
+        elif i == 'wecom_app':
+            if QYWX_AM:
+                wecom_app(title=title, content=content)
+            else:
+                print('未启用企业微信应用消息推送')
+            continue
+        else:
+            print('此类推送方式不存在')
 
 
 def main():
