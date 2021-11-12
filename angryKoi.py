@@ -334,20 +334,6 @@ async def asyncmain():
             await asyncio.wait(tasks)
 
 
-def main():
-    msg('🔔愤怒的锦鲤，开始！\n')
-    msg(f'====================共{len(cookie_list)}京东个账号Cookie=========\n')
-
-    asyncio.run(asyncmain())
-    
-    msg('作者：wuye9999\n')
-    msg('地址:https://github.com/wuye999/myScripts')
-    if run_send=='yes':
-        send('愤怒的锦鲤')   # 通知服务
-
-
-if __name__ == '__main__':
-    main()
 
 
 
